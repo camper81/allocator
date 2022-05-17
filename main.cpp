@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <memory>
 #include <mutex>
 
 //#define NO_HEAP_USAGE
@@ -13,13 +14,15 @@ struct Chunk {
 };
 
 template<typename T, size_t N>
-class MemoryAllocator{
+class StackMemoryAllocator{
 public:
     T* get(size_t request_size) {
         auto* chunk = &chunks_[0];
+        std::lock_guard g(mtx_);
         if(chunk->data_ == nullptr)
             chunk->data_ = &reserved_memory_[0];
         size_t free_memory = 0;
+        //arrange_free_mem();
         while(chunk) {
             std::cout << "Chunk: " << chunk - &chunks_[0] << std::endl;
             std::cout << "Size = ";
@@ -52,7 +55,7 @@ public:
 
                     chunk->is_busy_ = true;
                     if(chunk->next_available_chunk_ == nullptr && free_memory == request_size)
-                        break;
+                        return chunk->data_;
 
                     chunk->next_available_chunk_ = chunk + request_size;
                     chunk->next_available_chunk_->data_ =
@@ -67,8 +70,9 @@ public:
     }
     bool release(T* pointer) {
         auto* chunk = &chunks_[0];
+        std::lock_guard g(mtx_);
         while(chunk) {
-            if(chunk->is_busy_ && chunk->data_ == pointer) {
+            if(chunk->data_ == pointer) {
 #ifdef DEBUG_
                 std::cout << "Delete stack" << std::endl;
 #endif
@@ -80,14 +84,16 @@ public:
         return false;
     }
 private:
-    void arrange_free_mem(){
+    void rearrange(){
         auto* chunk = &chunks_[0];
-        auto* prev_free_chunk = &chunks_[0];
+        auto* prev_chunk = &chunks_[0];
         while(chunk){
-            if(!chunk->is_busy_ && prev_free_chunk != chunk) {
-                prev_free_chunk->next_available_chunk_ = chunk->next_available_chunk_;
+            if(!chunk->is_busy_ && !prev_chunk->is_busy_ && prev_chunk != chunk) {
+                prev_chunk->next_available_chunk_ = chunk->next_available_chunk_;
             }
-            chunk = chunk->next_available_chunk_();
+            if(!chunk->is_busy_)
+                prev_chunk = chunk;
+            chunk = chunk->next_available_chunk_;
         }
     }
 
@@ -97,7 +103,7 @@ private:
 };
 
 template<typename T, size_t N>
-struct StackAllocator {
+struct CustomAllocator {
     using value_type = T;
 
     using pointer = T*;
@@ -107,71 +113,22 @@ struct StackAllocator {
 
     template<typename U>
     struct rebind {
-        using other = StackAllocator<U, N>;
+        using other = CustomAllocator<U, N>;
     };
 
-    StackAllocator() = default;
-    ~StackAllocator() = default;
+    CustomAllocator() = default;
+    ~CustomAllocator() = default;
 
-    StackAllocator(const StackAllocator&){
+    CustomAllocator(const CustomAllocator&){
 
     };
-    StackAllocator& operator=(const StackAllocator&) = delete;
+    CustomAllocator& operator=(const CustomAllocator&) = delete;
 
     T *allocate(std::size_t n) {
 #ifdef DEBUG_
         std::cout << "allocate: " << n << std::endl;
 #endif
-        T* allocated_block = nullptr;
-        mtx_.lock();
-        auto* chunk = &chunks_[0];
-        if(chunk->data_ == nullptr)
-            chunk->data_ = &reserved_memory_[0];
-        size_t free_memory = 0;
-        while(chunk) {
-
-            std::cout << "Chunk: " << chunk - &chunks_[0] << std::endl;
-            std::cout << "Size = ";
-            if(chunk->next_available_chunk_ == nullptr){
-                std::cout << &reserved_memory_[N] - chunk->data_;
-            } else {
-                std::cout << chunk->next_available_chunk_ - chunk;
-            }
-            std::cout << " Busy = " << chunk->is_busy_;
-            std::cout << std::endl;
-            if(!chunk->is_busy_) {
-
-                // if last chunk in stack
-                if(chunk->next_available_chunk_ == nullptr) {
-#ifdef DEBUG_
-                    std::cout << "allocate in stack last element" << std::endl;
-#endif
-                    free_memory = &reserved_memory_[N] - chunk->data_;
-                } else {
-#ifdef DEBUG_
-                    std::cout << "allocate in stack current chunk" << std::endl;
-#endif
-                    free_memory = chunk->next_available_chunk_ - chunk;
-                }
-
-                if(free_memory >= n) {
-#ifdef DEBUG_
-                    std::cout << "/allocate in stack>" << std::endl;
-#endif
-                    allocated_block = chunk->data_;
-                    chunk->is_busy_ = true;
-                    if(chunk->next_available_chunk_ == nullptr && free_memory == n)
-                        break;
-
-                    chunk->next_available_chunk_ = chunk + n;
-                    chunk->next_available_chunk_->data_ =
-                            &reserved_memory_[chunk->next_available_chunk_ - &chunks_[0]];
-                    break;
-                }
-            }
-            chunk = chunk->next_available_chunk_;
-        }
-        mtx_.unlock();
+        T* allocated_block = mem_allocator_.get(n);
         if(allocated_block == nullptr)
         {
 #ifdef NO_HEAP_USAGE
@@ -187,29 +144,12 @@ struct StackAllocator {
     }
 
     void deallocate(T *p, std::size_t n) {
-        bool memory_free = false;
-        mtx_.lock();
-        auto* chunk = &chunks_[0];
-        while(chunk) {
-            if(chunk->is_busy_ && chunk->data_ == p) {
-#ifdef DEBUG_
-                std::cout << "Delete stack" << std::endl;
-#endif
-                chunk->is_busy_ = false;
-                memory_free = true;
-                break;
-            }
-            chunk = chunk->next_available_chunk_;
-        }
-       mtx_.unlock();
-
-       if(!memory_free) {
+       if(!mem_allocator_.release(p)) {
 #ifdef DEBUG_
            std::cout << "Delete Pointer" << std::endl;
 #endif
            delete p;
        }
-
     }
 
     template<typename U, typename ...Args>
@@ -218,22 +158,27 @@ struct StackAllocator {
     };
 
     void destroy(T *p) {
+        std::cout << "destroy" << std::endl;
+
         p->~T();
+        mem_allocator_.release(p);
     }
-    std::mutex mtx_;
-    Chunk<T> chunks_[N] = {};
-    T reserved_memory_[N] = {};
+    StackMemoryAllocator<T, N> mem_allocator_;
 };
 
 int main(int, char *[]) {
-    auto v = std::vector<int, StackAllocator<int, 6>>{};
+    auto v = std::vector<int, CustomAllocator<int, 6>>{};
 //    v.reserve(100);
 //
 //    for (int i = 0; i < 100; ++i) {
 //        v.push_back(i);
 //    }
-    v.push_back(2);
-    v.push_back(3);
+    {
+        v.push_back(2);
+        v.push_back(3);
+        v.shrink_to_fit();
+    }
+    v.reserve(3);
     v.push_back(5);
 //
 //    std::cout << "\n\n\n\nAfter creation\n\n\n\n" << std::endl;
@@ -243,7 +188,7 @@ int main(int, char *[]) {
 //            int,
 //            float,
 //            std::less<int>,
-//            StackAllocator<
+//            CustomAllocator<
 //                    std::pair<
 //                            const int, float
 //                    >, 5
