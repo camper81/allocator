@@ -1,5 +1,9 @@
 #pragma once
+
 #include <mutex>
+
+//#define DEBUG_
+//#define NO_HEAP_USAGE
 
 template<typename T>
 struct Chunk {
@@ -93,10 +97,13 @@ private:
     T pre_allocated_[N] = {};
 };
 
-template<typename T, size_t N>
+template<class T, size_t N>
 struct CustomAllocator {
-    using value_type = T;
+    using size_type = size_t;
+    using difference_type = ptrdiff_t;
 
+
+    using value_type = T;
     using pointer = T*;
     using const_pointer = const T*;
     using reference = T&;
@@ -107,11 +114,11 @@ struct CustomAllocator {
         using other = CustomAllocator<U, N>;
     };
 
-    CustomAllocator() = default;
+    constexpr CustomAllocator() noexcept {};
     ~CustomAllocator() = default;
 
-    CustomAllocator(const CustomAllocator&) {};
-    CustomAllocator& operator=(const CustomAllocator&) = delete;
+    constexpr CustomAllocator(const CustomAllocator&) noexcept {};
+    CustomAllocator& operator=(const CustomAllocator&) = default;
 
     pointer allocate(std::size_t n) {
 #ifdef DEBUG_
