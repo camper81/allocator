@@ -19,6 +19,10 @@ if(WITH_BOOST_TEST)
             COMPILE_DEFINITIONS BOOST_TEST_DYN_LINK
             INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIR}
             )
+
+    target_include_directories(test
+            PUBLIC ${INCLUDE_DIR}
+            )
 endif()
 
 
