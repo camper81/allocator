@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <boost/test/unit_test.hpp>
+#include "custom_allocator.h"
 #include "factorial.h"
 
 template <typename T>
