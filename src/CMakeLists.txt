@@ -19,11 +19,6 @@ if(WITH_BOOST_TEST)
             COMPILE_DEFINITIONS BOOST_TEST_DYN_LINK
             INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIR}
             )
-
-    target_link_libraries(test
-            ${Boost_LIBRARIES}
-            stack_allocator
-            )
 endif()
 
 
