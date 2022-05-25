@@ -42,5 +42,5 @@ endif()
 
 #if(WITH_BOOST_TEST)
     enable_testing()
-    add_test(test test_map)
+    add_test(test_map test)
 #endif()
