@@ -36,3 +36,8 @@ else ()
             -Wall -Wextra -pedantic -Werror
             )
 endif()
+
+if(WITH_BOOST_TEST)
+    enable_testing()
+    add_test(test test)
+endif()

@@ -10,6 +10,8 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
 
+option(WITH_BOOST_TEST "Whether to build Boost test" ON)
+
 add_subdirectory(src)
 
 #target_link_libraries(allocator Boost::unit_test_framework)
