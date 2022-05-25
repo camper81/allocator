@@ -6,7 +6,7 @@ target_include_directories(allocator
         PUBLIC ${INCLUDE_DIR}
         )
 
-if(WITH_BOOST_TEST)
+#if(WITH_BOOST_TEST)
     find_package(Boost COMPONENTS unit_test_framework REQUIRED)
     add_executable(test test.cpp)
 
@@ -27,7 +27,7 @@ if(WITH_BOOST_TEST)
     target_link_libraries(test
             ${Boost_LIBRARIES}
             )
-endif()
+#endif()
 
 
 if (MSVC)
@@ -40,7 +40,7 @@ else ()
             )
 endif()
 
-if(WITH_BOOST_TEST)
+#if(WITH_BOOST_TEST)
     enable_testing()
     add_test(test test_map)
-endif()
+#endif()
