@@ -139,7 +139,7 @@ struct CustomAllocator {
         return allocated_block;
     }
 
-    void deallocate(pointer p, std::size_t n) {
+    void deallocate(pointer p, [[maybe_unused]]std::size_t n) {
         if(!mem_allocator_.release(p)) {
 #ifdef DEBUG_
             std::cout << "Delete Pointer" << std::endl;
@@ -151,7 +151,7 @@ struct CustomAllocator {
     template<typename U, typename ...Args>
     void construct(U *p, Args &&...args) {
         new(p) U(std::forward<Args>(args)...);
-    };
+    }
 
     void destroy(pointer p) {
         p->~T();

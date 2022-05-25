@@ -8,5 +8,8 @@ set(CMAKE_CXX_STANDARD 17)
 #find_package(Boost REQUIRED COMPONENTS
 #        unit_test_framework)
 
-add_executable(allocator main.cpp)
+set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
+
+add_subdirectory(src)
+
 #target_link_libraries(allocator Boost::unit_test_framework)

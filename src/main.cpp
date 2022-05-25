@@ -4,34 +4,27 @@
 #include <functional>
 #include "custom_allocator.h"
 #include "cvector.h"
-
-
-constexpr long long factorial(const long long n)
-{
-    if (n == 0)
-        return 1;
-    else
-        return n * factorial(n - 1);
-}
+#include "factorial.h"
+#include <sstream>
 
 template <typename T>
-void print(T m){
+void print(T m, std::ostream& os){
     for(auto&[key, value] : m) {
-        std::cout << key << " " << value << std::endl;
+        os << key << " " << value << std::endl;
     }
 }
 
 template <typename T,typename U, size_t Size = 10>
 void assign(T& m, U (*func)(U a)){
-    for(U key = 0 ; key < Size; ++key ) {
+    for(size_t key = 0 ; key < Size; ++key ) {
         m[key] = func(key);
     }
 }
 
 template<typename T>
-void test(T m){
+void test(T m, std::ostream& os = std::cout){
         assign(m, &factorial);
-        print(m);
+        print(m, os);
 }
 
 void test0() {
