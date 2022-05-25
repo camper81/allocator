@@ -23,6 +23,10 @@ if(WITH_BOOST_TEST)
     target_include_directories(test
             PUBLIC ${INCLUDE_DIR}
             )
+
+    target_link_libraries(test
+            ${Boost_LIBRARIES}
+            )
 endif()
 
 
