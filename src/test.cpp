@@ -3,7 +3,9 @@
 #include <sstream>
 #include <boost/test/unit_test.hpp>
 #include "custom_allocator.h"
+#include "cvector.h"
 #include "factorial.h"
+#include <exception>
 
 template <typename T>
 void print(T m, std::ostream& os){
@@ -41,5 +43,36 @@ BOOST_AUTO_TEST_CASE(testCompare) {
 
     BOOST_CHECK_EQUAL(sstr1.str(), sstr2.str());
 }
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(test_my_container)
+
+    BOOST_AUTO_TEST_CASE(equality_test) {
+        SimpleVector<int> sv1;
+        for(size_t idx = 0; idx < 10; ++idx) {
+            sv1.push_back(idx);
+        }
+
+        SimpleVector<int, CustomAllocator<int, 10>> sv2;
+        for(size_t idx = 0; idx < 10; ++idx) {
+            sv2.push_back(idx);
+        }
+
+        BOOST_CHECK_EQUAL_COLLECTIONS(sv1.begin(), sv1.end(), sv2.begin(), sv2.end());
+    }
+
+
+    BOOST_AUTO_TEST_CASE(exception_test) {
+//        auto func = [](){
+//            SimpleVector<int, CustomAllocator<int, 3>> sv;
+//            for(size_t idx = 0; idx < 10; ++idx) {
+//                sv.push_back(idx);
+//            }
+//        };
+//
+//        BOOST_CHECK_THROW(func(), std::bad_alloc);
+    }
+
 
 BOOST_AUTO_TEST_SUITE_END()
