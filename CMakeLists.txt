@@ -14,4 +14,4 @@ option(WITH_BOOST_TEST "Whether to build Boost test" ON)
 
 add_subdirectory(src)
 
-#target_link_libraries(allocator Boost::unit_test_framework)
+#target_link_libraries(allocator_ Boost::unit_test_framework)

@@ -3,7 +3,7 @@
 #include <map>
 #include <functional>
 #include "custom_allocator.h"
-#include "cvector.h"
+#include "custom_vector.h"
 #include "factorial.h"
 #include <sstream>
 
@@ -39,7 +39,7 @@ void test1() {
 }
 
 void test2() {
-    SimpleVector<int, CustomAllocator<int, 10>> sv;
+    CustomVector<int, CustomAllocator<int, 10>> sv;
     for(size_t idx = 0; idx < 10; ++idx) {
         sv.push_back(idx);
     }
@@ -63,7 +63,7 @@ int main(int, char *[]) {
 //    v.reserve(3);
 //    v.push_back(5);
 
-//    SimpleVector<int, CustomAllocator<int, 3>> sv;
+//    CustomVector<int, CustomAllocator<int, 3>> sv;
 //    sv.push_back(1);
 //    sv.push_back(2);
 //    sv.push_back(3);
@@ -86,7 +86,7 @@ int main(int, char *[]) {
 //    m[20] = {1};
 //    m[21] = {1};
 //
-//    std::allocator<std::pair<int,std::string>> a;
+//    std::allocator_<std::pair<int,std::string>> a;
 
 //    for (int i = 0; i < 2; ++i) {
 //        m[i] = static_cast<float>(i);

@@ -24,7 +24,7 @@ public:
 
         size_t free_memory = 0;
 
-        //rearrange_free_spaces();
+        // rearrange_free_spaces();
 
         while(ptr_chunk) {
             if(!ptr_chunk->is_busy_) {
