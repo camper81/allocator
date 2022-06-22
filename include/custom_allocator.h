@@ -1,7 +1,5 @@
 #pragma once
 
-#include <mutex>
-
 //#define DEBUG_
 //#define NO_HEAP_USAGE
 
@@ -16,7 +14,6 @@ template<typename T, size_t N>
 class StackMemoryAllocator{
 public:
     T* get(size_t request_size) {
-        std::lock_guard g(mtx_);
         auto* ptr_chunk = &chunk_storage_[0];
 
         if(ptr_chunk->data_ == nullptr)
@@ -63,7 +60,6 @@ public:
         return nullptr;
     }
     bool release(T* pointer) {
-        std::lock_guard g(mtx_);
         auto* chunk = &chunk_storage_[0];
         while(chunk) {
             if(chunk->data_ == pointer) {
@@ -92,7 +88,6 @@ private:
         }
     }
 
-    std::mutex mtx_;
     Chunk<T> chunk_storage_[N] = {};
     T pre_allocated_[N] = {};
 };
