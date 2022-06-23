@@ -21,20 +21,20 @@ public:
         return data_ + size_;
     }
 
-    size_t Size() const
+    size_t size() const
     {
         return size_;
     }
-    size_t Capacity() const
+    size_t capacity() const
     {
         return capacity_;
     }
 
-
     // принимаем объект по значению
     void push_back(T value)
     {
-        if(size_ == capacity_) expand();
+        if(size_ == capacity_)
+            expand();
 
         data_[size_++] = value;
     }
